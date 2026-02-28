@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book Cost Calculator — Herringbone Bookstore</title>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Karla:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #c8102e;
+    --red-dark: #9e0c24;
+    --red-muted: #e8536a;
+    --black: #0d0d0d;
+    --black-soft: #1c1c1c;
+    --white: #ffffff;
+    --off-white: #f8f4f0;
+    --gray-light: #e8e4e0;
+    --gray-mid: #b0a8a2;
+    --gray-dark: #5a5550;
+    --shadow: rgba(13,13,13,0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Karla', sans-serif;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Herringbone SVG background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M0 20L10 10L20 20L10 30L0 20zM20 20L30 10L40 20L30 30L20 20z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body > * { position: relative; z-index: 1; }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--red);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='28' height='28' viewBox='0 0 28 28' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.07'%3E%3Cpath d='M0 14L7 7L14 14L7 21L0 14zM14 14L21 7L28 14L21 21L14 14z'/%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    position: relative;
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .brand-name {
+    font-family: 'Bodoni Moda', serif;
+    font-size: 2.1rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--white);
+    text-transform: uppercase;
+  }
+
+  .brand-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    margin-top: 4px;
+  }
+
+  .header-badge {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  /* Diagonal accent bar */
+  .header-stripe {
+    height: 6px;
+    background: repeating-linear-gradient(
+      45deg,
+      var(--black) 0px,
+      var(--black) 8px,
+      var(--white) 8px,
+      var(--white) 12px
+    );
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 24px 60px;
+  }
+
+  .section-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--red);
+    opacity: 0.3;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    background: rgba(255,255,255,0.06);
+  }
+
+  @media (max-width: 680px) {
+    .grid { grid-template-columns: 1fr; }
+    .header-inner { flex-wrap: wrap; gap: 12px; }
+    .brand-name { font-size: 1.5rem; }
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--black-soft);
+    padding: 28px 28px 24px;
+    border: 1px solid rgba(255,255,255,0.07);
+    position: relative;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover {
+    border-color: rgba(200,16,46,0.3);
+  }
+
+  .card-corner {
+    position: absolute;
+    top: 0; right: 0;
+    width: 0; height: 0;
+    border-style: solid;
+    border-width: 0 28px 28px 0;
+    border-color: transparent var(--red) transparent transparent;
+    opacity: 0.5;
+  }
+
+  .card h2 {
+    font-family: 'Bodoni Moda', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    margin-bottom: 22px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--white);
+  }
+
+  .card h2 .step {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    background: var(--red);
+    color: white;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 400;
+    flex-shrink: 0;
+    letter-spacing: 0;
+  }
+
+  /* ── FIELDS ── */
+  .field { margin-bottom: 16px; }
+
+  label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gray-mid);
+    margin-bottom: 6px;
+  }
+
+  select, input[type="number"] {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--white);
+    font-family: 'Karla', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  select:focus, input[type="number"]:focus {
+    border-color: var(--red);
+    background: rgba(200,16,46,0.08);
+  }
+
+  .select-wrap {
+    position: relative;
+  }
+
+  .select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--red);
+    font-size: 0.9rem;
+  }
+
+  select option {
+    background: var(--black-soft);
+    color: var(--white);
+  }
+
+  .hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    color: rgba(255,255,255,0.3);
+    margin-top: 4px;
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+  }
+
+  /* ── CURRENCY TABS ── */
+  .currency-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 18px;
+  }
+
+  .currency-tabs button {
+    flex: 1;
+    padding: 8px 4px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: transparent;
+    color: var(--gray-mid);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    margin-right: -1px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .currency-tabs button.active {
+    background: var(--red);
+    border-color: var(--red);
+    color: white;
+    z-index: 1;
+  }
+
+  .currency-tabs button:hover:not(.active) {
+    background: rgba(200,16,46,0.15);
+    color: var(--white);
+  }
+
+  /* ── RESULT CARD ── */
+  .result-card {
+    grid-column: 1 / -1;
+    background: var(--white);
+    color: var(--black);
+    border: none;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .result-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 6px;
+    background: var(--red);
+  }
+
+  .result-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23c8102e' fill-opacity='0.04'%3E%3Cpath d='M0 12L6 6L12 12L6 18L0 12zM12 12L18 6L24 12L18 18L12 12z'/%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  .result-card > * { position: relative; z-index: 1; }
+
+  .result-card h2 {
+    color: var(--black);
+    border-bottom-color: rgba(0,0,0,0.1);
+  }
+
+  .result-card h2 .step {
+    background: var(--red);
+  }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 20px;
+    margin-top: 8px;
+  }
+
+  .result-item {
+    border-left: 3px solid var(--red);
+    padding-left: 12px;
+  }
+
+  .result-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gray-dark);
+    margin-bottom: 4px;
+  }
+
+  .result-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: var(--black);
+    letter-spacing: -0.01em;
+  }
+
+  .result-value.big {
+    font-size: 2rem;
+    color: var(--red-dark);
+    font-weight: 500;
+  }
+
+  .result-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--gray-dark);
+    margin-top: 3px;
+    opacity: 0.7;
+  }
+
+  .no-match {
+    background: var(--red-dark);
+    color: white;
+    padding: 14px 18px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    display: none;
+    margin-bottom: 0;
+  }
+
+  .result-tip {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--gray-dark);
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0,0,0,0.1);
+    line-height: 1.7;
+    letter-spacing: 0.03em;
+  }
+
+  .effective {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    text-align: right;
+    color: var(--gray-dark);
+    margin-top: 8px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.6;
+  }
+
+  /* Decorative herringbone divider */
+  .divider {
+    height: 20px;
+    background: repeating-linear-gradient(
+      45deg,
+      var(--red) 0px,
+      var(--red) 5px,
+      var(--black) 5px,
+      var(--black) 10px
+    );
+    margin: 0;
+    opacity: 0.6;
+  }
+
+  /* Footer */
+  footer {
+    background: var(--red);
+    text-align: center;
+    padding: 14px 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+  }
+
+  footer strong { color: white; font-weight: 400; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-name">Herringbone Bookstore</div>
+      <div class="brand-sub">IngramSpark · Book Cost Calculator</div>
+    </div>
+    <div class="header-badge">Effective Feb 1, 2026</div>
+  </div>
+  <div class="header-stripe"></div>
+</header>
+
+<div class="container">
+
+  <div class="section-title">Configure Your Book</div>
+
+  <div class="grid">
+
+    <!-- Card 1 -->
+    <div class="card">
+      <div class="card-corner"></div>
+      <h2><span class="step">1</span> Book Specifications</h2>
+
+      <div class="field">
+        <label>Book Size</label>
+        <div class="select-wrap">
+          <select id="size" onchange="calculate()">
+            <option value="Small">Small — under 6.15" wide</option>
+            <option value="Large">Large — 6.15" wide or more</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Binding</label>
+        <div class="select-wrap">
+          <select id="binding" onchange="updateOptions(); calculate()">
+            <option value="Paperback">Paperback</option>
+            <option value="Hardcover">Hardcover (no jacket)</option>
+            <option value="Hardcover w/ Jacket">Hardcover with Jacket</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Interior Color</label>
+        <div class="select-wrap">
+          <select id="color" onchange="updateOptions(); calculate()">
+            <option value="B&W">Black &amp; White</option>
+            <option value="STD Color">Standard Color</option>
+            <option value="Premium Color">Premium Color</option>
+            <option value="Ultra-Premium Color">Ultra-Premium Color</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Paper Type</label>
+        <div class="select-wrap">
+          <select id="paper" onchange="calculate()"></select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Number of Pages</label>
+        <input type="number" id="pages" min="18" max="1200" value="200" oninput="calculate()">
+        <div class="hint" id="pageHint">Allowed range: 18–1200 pages</div>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="card">
+      <div class="card-corner"></div>
+      <h2><span class="step">2</span> Order Details</h2>
+
+      <div class="field">
+        <label>Currency</label>
+        <div class="currency-tabs">
+          <button class="active" onclick="setCurrency('USD', this)">USD $</button>
+          <button onclick="setCurrency('GBP', this)">GBP £</button>
+          <button onclick="setCurrency('AUD', this)">AUD $</button>
+          <button onclick="setCurrency('EUR', this)">EUR €</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Order Quantity</label>
+        <input type="number" id="qty" min="1" value="1" oninput="calculate()">
+        <div class="hint">100+ copies: quantity discounts on publisher direct orders</div>
+      </div>
+
+      <div class="field">
+        <label>Order Type</label>
+        <div class="select-wrap">
+          <select id="orderType" onchange="calculate()">
+            <option value="wholesale">Wholesale Channel (retailer orders)</option>
+            <option value="publisher">Publisher Direct (you order)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field" id="rushField">
+        <label>Print Speed</label>
+        <div class="select-wrap">
+          <select id="rush" onchange="calculate()">
+            <option value="0">Economy (standard turnaround)</option>
+            <option value="0.30">Rush (+30% surcharge)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Your Retail List Price</label>
+        <input type="number" id="listPrice" min="0" step="0.01" value="14.99" oninput="calculate()">
+        <div class="hint">Used to estimate publisher compensation on wholesale orders</div>
+      </div>
+    </div>
+
+    <!-- Result Card -->
+    <div class="card result-card">
+      <h2><span class="step">✦</span> Cost Breakdown</h2>
+      <div id="noMatch" class="no-match">⚠ No matching product for this combination. Adjust size, binding, color, or paper.</div>
+      <div id="results">
+        <div class="result-grid">
+          <div class="result-item">
+            <div class="result-label">Cover Cost</div>
+            <div class="result-value" id="rCover">—</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Interior Cost</div>
+            <div class="result-value" id="rInterior">—</div>
+            <div class="result-sub" id="rInteriorSub"></div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Print Cost / Book</div>
+            <div class="result-value" id="rPrintCost">—</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Total Print Cost</div>
+            <div class="result-value big" id="rTotal">—</div>
+            <div class="result-sub" id="rQtySub"></div>
+          </div>
+          <div class="result-item" id="compItem">
+            <div class="result-label">Publisher Compensation</div>
+            <div class="result-value" id="rComp">—</div>
+            <div class="result-sub" id="rCompSub"></div>
+          </div>
+          <div class="result-item" id="rushItem" style="display:none">
+            <div class="result-label">Rush Surcharge</div>
+            <div class="result-value" id="rRush">—</div>
+          </div>
+          <div class="result-item" id="discountItem" style="display:none">
+            <div class="result-label">Qty Discount</div>
+            <div class="result-value" id="rDiscount">—</div>
+          </div>
+        </div>
+        <div class="result-tip">
+          Formula: (Cost per Page × Pages) + Cost per Cover = Print Cost per Book<br>
+          Publisher direct orders also incur an order handling fee + shipping (calculated at time of order).<br>
+          Wholesale distribution includes a 1.875% market access fee on list price per sale.
+        </div>
+        <div class="effective">IngramSpark Price Sheet · Effective February 1, 2026</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+<footer>
+  <strong>Herringbone Bookstore</strong> · IngramSpark Cost Calculator · All prices in selected currency · Not a substitute for official IngramSpark quotes
+</footer>
+
+<script>
+// ── PRICING DATA ──────────────────────────────────────────────────────────────
+// [size, binding, color, paper, minPages, maxPages, USD_cover, USD_page, GBP_cover, GBP_page, AUD_cover, AUD_page, EUR_cover, EUR_page]
+const PRICES = [
+  ["Small","Paperback","B&W","Groundwood",18,900, 1.33,0.0144, 1.37,0.0115, 2.50,0.0245, 1.61,0.0135],
+  ["Small","Hardcover","B&W","Groundwood",18,840, 5.71,0.0141, 5.06,0.0115, 9.36,0.0231, 5.97,0.0135],
+  ["Small","Hardcover w/ Jacket","B&W","Groundwood",18,840, 7.76,0.0145, 6.33,0.0115, 11.68,0.0231, 7.45,0.0135],
+  ["Large","Paperback","B&W","Groundwood",18,900, 1.39,0.0211, null,null, null,null, null,null],
+  ["Small","Paperback","B&W","50lb Crème",18,1050, 1.33,0.0146, 1.37,0.0116, 2.50,0.0248, 1.61,0.0136],
+  ["Small","Paperback","B&W","50lb White",18,1200, 1.33,0.0146, 1.37,0.0116, 2.50,0.0248, 1.61,0.0136],
+  ["Large","Paperback","B&W","50lb White",18,1200, 1.39,0.0212, 1.37,0.0196, 2.50,0.0351, 1.61,0.0231],
+  ["Small","Hardcover","B&W","50lb Crème",18,1050, 5.31,0.0132, 5.06,0.0116, 9.36,0.0233, 5.97,0.0136],
+  ["Small","Hardcover","B&W","50lb White",18,1200, 5.31,0.0132, 5.06,0.0116, 9.36,0.0233, 5.97,0.0136],
+  ["Small","Hardcover w/ Jacket","B&W","50lb Crème",18,1050, 7.76,0.0147, 6.33,0.0116, 11.68,0.0233, 7.45,0.0136],
+  ["Small","Hardcover w/ Jacket","B&W","50lb White",18,1200, 7.76,0.0147, 6.33,0.0116, 11.68,0.0233, 7.45,0.0136],
+  ["Large","Hardcover","B&W","50lb White",18,1200, 5.26,0.0185, 5.21,0.0202, 9.36,0.0331, 6.14,0.0238],
+  ["Small","Paperback","B&W","70lb White",18,900, 1.35,0.0232, 1.41,0.0137, 2.57,0.0286, 1.66,0.0160],
+  ["Large","Paperback","B&W","70lb White",18,900, 1.41,0.0361, 1.41,0.0231, 2.57,0.0414, 1.66,0.0273],
+  ["Small","Hardcover","B&W","70lb White",18,840, 5.88,0.0229, 5.21,0.0137, 9.36,0.0263, 6.14,0.0160],
+  ["Small","Hardcover w/ Jacket","B&W","70lb White",18,840, 7.76,0.0229, 6.52,0.0137, 11.68,0.0263, 7.67,0.0160],
+  ["Large","Hardcover","B&W","70lb White",18,840, 6.01,0.0357, 5.21,0.0231, 9.63,0.0391, 6.14,0.0272],
+  ["Small","Paperback","STD Color","50lb White",18,1200, 1.16,0.0249, 1.41,0.0222, 2.57,0.0401, 1.66,0.0261],
+  ["Large","Paperback","STD Color","50lb White",18,1200, 1.23,0.0392, 1.41,0.0325, 2.57,0.0586, 1.66,0.0381],
+  ["Small","Hardcover","STD Color","50lb White",18,1200, 6.38,0.0276, 5.21,0.0222, 9.63,0.0378, 6.14,0.0261],
+  ["Small","Hardcover w/ Jacket","STD Color","50lb White",18,1200, 8.43,0.0276, 6.52,0.0222, 12.03,0.0378, 7.67,0.0261],
+  ["Large","Hardcover","STD Color","50lb White",18,1200, 6.55,0.0427, 5.21,0.0325, 9.63,0.0553, 6.14,0.0381],
+  ["Small","Paperback","STD Color","70lb White",18,900, 1.35,0.0374, 1.41,0.0239, 2.57,0.0434, 1.66,0.0281],
+  ["Large","Paperback","STD Color","70lb White",18,900, 1.41,0.0593, 1.41,0.0353, 2.57,0.0638, 1.66,0.0416],
+  ["Small","Hardcover","STD Color","70lb White",18,840, 6.38,0.0359, 5.21,0.0239, 9.63,0.0409, 6.14,0.0281],
+  ["Small","Hardcover w/ Jacket","STD Color","70lb White",18,840, 8.43,0.0359, 6.52,0.0239, 12.03,0.0409, 7.67,0.0281],
+  ["Large","Hardcover","STD Color","70lb White",18,840, 6.55,0.0572, 5.21,0.0353, 9.63,0.0602, 6.14,0.0415],
+  ["Small","Paperback","Premium Color","70lb White",18,900, 1.35,0.0721, 1.41,0.0457, 2.57,0.0598, 1.66,0.0537],
+  ["Large","Paperback","Premium Color","70lb White",18,900, 1.41,0.0946, 1.41,0.0637, 2.57,0.1127, 1.66,0.0748],
+  ["Small","Hardcover","Premium Color","70lb White",18,840, 6.51,0.0752, 5.21,0.0443, 9.63,0.0604, 6.14,0.0523],
+  ["Small","Hardcover w/ Jacket","Premium Color","70lb White",18,840, 8.43,0.0752, 6.52,0.0443, 12.03,0.0604, 7.67,0.0543],
+  ["Large","Hardcover","Premium Color","70lb White",18,840, 6.69,0.1003, 5.21,0.0618, 9.63,0.1170, 6.14,0.0760],
+  ["Small","Paperback","Ultra-Premium Color","70lb White",18,900, 2.66,0.0849, 1.41,0.0608, 2.57,0.0797, 1.66,0.0716],
+  ["Large","Paperback","Ultra-Premium Color","70lb White",18,900, 2.66,0.1061, 1.41,0.0847, 2.57,0.1502, 1.66,0.0998],
+  ["Small","Hardcover","Ultra-Premium Color","70lb White",18,840, 7.70,0.0849, 5.21,0.0591, 9.63,0.0804, 6.14,0.0696],
+  ["Small","Hardcover w/ Jacket","Ultra-Premium Color","70lb White",18,840, 9.55,0.0849, 6.52,0.0591, 12.03,0.0804, 7.67,0.0724],
+  ["Large","Hardcover","Ultra-Premium Color","70lb White",18,840, 7.70,0.1061, 5.21,0.0823, 9.63,0.1559, 6.14,0.1012],
+];
+
+const PAPER_OPTIONS = {
+  "B&W": ["Groundwood","50lb Crème","50lb White","70lb White"],
+  "STD Color": ["50lb White","70lb White"],
+  "Premium Color": ["70lb White"],
+  "Ultra-Premium Color": ["70lb White"],
+};
+
+const CURRENCY_MAP = {
+  "USD": { sym: "$", coverIdx: 6, pageIdx: 7 },
+  "GBP": { sym: "£", coverIdx: 8, pageIdx: 9 },
+  "AUD": { sym: "$", coverIdx: 10, pageIdx: 11 },
+  "EUR": { sym: "€", coverIdx: 12, pageIdx: 13 },
+};
+
+const QTY_DISCOUNTS = [
+  [1,99,0],[100,299,0.02],[300,399,0.05],[400,499,0.075],
+  [500,999,0.10],[1000,1499,0.15],[1500,2499,0.20],
+  [2500,4999,0.25],[5000,9999,0.30],[10000,Infinity,0.35]
+];
+
+let currency = "USD";
+
+function setCurrency(c, btn) {
+  currency = c;
+  document.querySelectorAll('.currency-tabs button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  calculate();
+}
+
+function updateOptions() {
+  const color = document.getElementById('color').value;
+  const sel = document.getElementById('paper');
+  const cur = sel.value;
+  const opts = PAPER_OPTIONS[color] || [];
+  sel.innerHTML = '';
+  opts.forEach(p => {
+    const o = document.createElement('option');
+    o.value = o.text = p;
+    if (p === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+  calculate();
+}
+
+function getDiscount(qty) {
+  for (const [min, max, disc] of QTY_DISCOUNTS)
+    if (qty >= min && qty <= max) return disc;
+  return 0;
+}
+
+function sym() {
+  const c = CURRENCY_MAP[currency];
+  return currency === 'EUR' ? '€' : c.sym;
+}
+
+function fmt(v) {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  return sym() + v.toFixed(2);
+}
+
+function calculate() {
+  const size     = document.getElementById('size').value;
+  const binding  = document.getElementById('binding').value;
+  const color    = document.getElementById('color').value;
+  const paper    = document.getElementById('paper').value;
+  const pages    = parseInt(document.getElementById('pages').value) || 0;
+  const qty      = parseInt(document.getElementById('qty').value) || 1;
+  const orderType= document.getElementById('orderType').value;
+  const rushRate = parseFloat(document.getElementById('rush').value);
+  const listPrice= parseFloat(document.getElementById('listPrice').value) || 0;
+  const ci       = CURRENCY_MAP[currency];
+
+  const row = PRICES.find(r => r[0]===size && r[1]===binding && r[2]===color && r[3]===paper);
+  const noMatch = document.getElementById('noMatch');
+  const results = document.getElementById('results');
+
+  if (row) document.getElementById('pageHint').textContent = `Allowed range: ${row[4]}–${row[5]} pages`;
+
+  if (!row || row[ci.coverIdx] === null) {
+    noMatch.style.display = 'block';
+    results.style.display = 'none';
+    noMatch.textContent = row
+      ? `⚠ This combination is not available in ${currency}. Try USD.`
+      : '⚠ No matching product for this combination. Adjust your selections.';
+    return;
+  }
+
+  noMatch.style.display = 'none';
+  results.style.display = 'block';
+
+  const coverCost    = row[ci.coverIdx];
+  const pageCost     = row[ci.pageIdx];
+  const interiorCost = pageCost * pages;
+  const printPerBook = coverCost + interiorCost;
+  const rushAmt      = printPerBook * rushRate;
+  const effPrint     = printPerBook + rushAmt;
+  const discount     = orderType === 'publisher' ? getDiscount(qty) : 0;
+  const discounted   = effPrint * (1 - discount);
+  const total        = discounted * qty;
+
+  document.getElementById('rCover').textContent = fmt(coverCost);
+  document.getElementById('rInterior').textContent = fmt(interiorCost);
+  document.getElementById('rInteriorSub').textContent = `${sym()}${pageCost.toFixed(4)} × ${pages} pages`;
+  document.getElementById('rPrintCost').textContent = fmt(effPrint);
+  document.getElementById('rTotal').textContent = fmt(total);
+  document.getElementById('rQtySub').textContent = `${qty} × ${fmt(discounted)} per book`;
+
+  const rushItem = document.getElementById('rushItem');
+  if (rushRate > 0) {
+    rushItem.style.display = 'block';
+    document.getElementById('rRush').textContent = fmt(rushAmt) + ' / book';
+  } else { rushItem.style.display = 'none'; }
+
+  const discItem = document.getElementById('discountItem');
+  if (discount > 0) {
+    discItem.style.display = 'block';
+    document.getElementById('rDiscount').textContent = (discount * 100).toFixed(1) + '%';
+  } else { discItem.style.display = 'none'; }
+
+  const compItem = document.getElementById('compItem');
+  if (orderType === 'wholesale') {
+    compItem.style.display = 'block';
+    const comp = listPrice - effPrint;
+    document.getElementById('rComp').textContent = fmt(comp) + ' / book';
+    document.getElementById('rCompSub').textContent = `${fmt(listPrice)} list − ${fmt(effPrint)} print`;
+  } else { compItem.style.display = 'none'; }
+
+  document.getElementById('rushField').style.display = orderType === 'publisher' ? 'block' : 'none';
+}
+
+updateOptions();
+calculate();
+</script>
+</body>
+</html>
